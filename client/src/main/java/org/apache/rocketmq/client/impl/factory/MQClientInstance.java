@@ -233,11 +233,11 @@ public class MQClientInstance {
                     if (null == this.clientConfig.getNamesrvAddr()) {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
-                    // Start request-response channel
+                    // Start request-response channel ，启动netty
                     this.mQClientAPIImpl.start();
-                    // Start various schedule tasks
+                    // Start various schedule tasks ， 与nameserver建立心跳连接，2分钟调度一次
                     this.startScheduledTask();
-                    // Start pull service
+                    // Start pull service，启动拉取服务
                     this.pullMessageService.start();
                     // Start rebalance service
                     this.rebalanceService.start();
@@ -261,6 +261,7 @@ public class MQClientInstance {
                 @Override
                 public void run() {
                     try {
+                        // 与nameserver建立心跳连接，2分钟调度一次
                         MQClientInstance.this.mQClientAPIImpl.fetchNameServerAddr();
                     } catch (Exception e) {
                         log.error("ScheduledTask fetchNameServerAddr exception", e);

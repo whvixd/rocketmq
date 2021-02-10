@@ -86,6 +86,7 @@ public class PullMessageService extends ServiceThread {
         }
     }
 
+    // 消费者有序拉消息服务：开启一个线程，轮询去有序堵塞队列中拉消息
     @Override
     public void run() {
         log.info(this.getServiceName() + " service started");

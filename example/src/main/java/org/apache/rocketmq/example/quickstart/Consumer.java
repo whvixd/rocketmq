@@ -37,6 +37,7 @@ public class Consumer {
          */
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("please_rename_unique_group_name_4");
 
+        consumer.setNamesrvAddr("192.168.43.41:9876");
         /*
          * Specify name server addresses.
          * <p/>
@@ -73,6 +74,13 @@ public class Consumer {
         });
 
         /*
+         * 1. this.pullMessageService.start();
+         * 2. PullMessageService -> run() 轮询拉取堵塞队列
+         * 3. PullCallback -> onSuccess()
+         * 4. DefaultMQPushConsumerImpl.this.consumeMessageService.submitConsumeRequest()
+         * 5. ConsumeRequest->run()
+         * 6. status = listener.consumeMessage(Collections.unmodifiableList(msgs), context);
+         * 7. Consumer执行69行代码
          *  Launch the consumer instance.
          */
         consumer.start();
