@@ -91,6 +91,7 @@ public class IOTinyUtils {
         try {
             tc = new FileOutputStream(tf).getChannel();
             sc = new FileInputStream(sf).getChannel();
+            // sendfile，kafka中发送消息会用的，rocketmq是mmap
             sc.transferTo(0, sc.size(), tc);
         } finally {
             if (null != sc) {
