@@ -30,5 +30,10 @@ abortFile=/Users/didi/Documents/workspace/idea/rocketmq/localdebug/abort
 
 
 4. **logback_namesrv.xml**修改`${user.home}`为`/Users/didi/Documents/workspace/idea/rocketmq/localdebug`
+**logback_broker.xml**类似
 
-5. 启动终端添加变量：ROCKETMQ_HOME=/Users/didi/Documents/workspace/idea/rocketmq/localdebug
+5. namesrv和broker启动终端添加变量：`ROCKETMQ_HOME=/Users/didi/Documents/workspace/idea/rocketmq/localdebug`
+
+6. broker终端program arguments添加 `-c /Users/didi/Documents/workspace/idea/rocketmq/localdebug/conf/broker.conf`
+
+7. 启动顺序：namesrv -> broker -> consumer -> producer
