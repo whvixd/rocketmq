@@ -37,7 +37,7 @@ public class Consumer {
          */
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("please_rename_unique_group_name_4");
 
-        consumer.setNamesrvAddr("192.168.43.41:9876");
+        consumer.setNamesrvAddr("127.0.0.1:9876");
         /*
          * Specify name server addresses.
          * <p/>

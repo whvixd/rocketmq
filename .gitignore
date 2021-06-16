@@ -13,4 +13,5 @@ devenv
 .DS_Store
 localbin
 nohup.out
-**/store/**
+localdebug/store/**
+localdebug/abort/**
