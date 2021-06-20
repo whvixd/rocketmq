@@ -58,6 +58,7 @@ public class NamesrvController {
     private ExecutorService remotingExecutor;
 
     private Configuration configuration;
+    // 文件监听服务
     private FileWatchService fileWatchService;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
@@ -75,15 +76,20 @@ public class NamesrvController {
 
     public boolean initialize() {
 
+        // 加载kv配置
         this.kvConfigManager.load();
 
+        // 实例化netty
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        // 实例化线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        // 注册请求处理器和线程池
         this.registerProcessor();
 
+        // 5秒后，每隔10秒心跳：扫描过期的broker，即两分钟没有反应的broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -92,6 +98,7 @@ public class NamesrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        // 1秒后，每隔10秒心跳：打印配置
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -102,6 +109,7 @@ public class NamesrvController {
 
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
+            // 注册文件监听器：若ssl相关文件发生变化，重载ssl
             try {
                 fileWatchService = new FileWatchService(
                     new String[] {
@@ -147,7 +155,7 @@ public class NamesrvController {
             this.remotingServer.registerDefaultProcessor(new ClusterTestRequestProcessor(this, namesrvConfig.getProductEnvName()),
                 this.remotingExecutor);
         } else {
-
+            // 注册请求处理器和线程池
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }

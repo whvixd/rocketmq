@@ -47,7 +47,7 @@ import org.apache.rocketmq.remoting.common.RemotingUtil;
 
 public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
-    private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
+    private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2; // 两分钟
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
@@ -431,10 +431,12 @@ public class RouteInfoManager {
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
+            // 与broker的过期时间为两分钟，若过期了，则关闭broker的连接
             if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();
                 log.warn("The broker channel expired, {} {}ms", next.getKey(), BROKER_CHANNEL_EXPIRED_TIME);
+                // 移除相关过期的broker
                 this.onChannelDestroy(next.getKey(), next.getValue().getChannel());
             }
         }
@@ -442,6 +444,7 @@ public class RouteInfoManager {
 
     public void onChannelDestroy(String remoteAddr, Channel channel) {
         String brokerAddrFound = null;
+        // 移除brokerLiveTable过期的broker
         if (channel != null) {
             try {
                 try {
@@ -471,6 +474,7 @@ public class RouteInfoManager {
 
         if (brokerAddrFound != null && brokerAddrFound.length() > 0) {
 
+            // 移除brokerLiveTable、filterServerTable、brokerAddrTable过期的broker
             try {
                 try {
                     this.lock.writeLock().lockInterruptibly();
@@ -505,6 +509,7 @@ public class RouteInfoManager {
                         }
                     }
 
+                    // 移除 clusterAddrTable 过期的broker
                     if (brokerNameFound != null && removeBrokerName) {
                         Iterator<Entry<String, Set<String>>> it = this.clusterAddrTable.entrySet().iterator();
                         while (it.hasNext()) {
@@ -527,6 +532,7 @@ public class RouteInfoManager {
                         }
                     }
 
+                    // 移除 topicQueueTable 过期的broker
                     if (removeBrokerName) {
                         Iterator<Entry<String, List<QueueData>>> itTopicQueueTable =
                             this.topicQueueTable.entrySet().iterator();

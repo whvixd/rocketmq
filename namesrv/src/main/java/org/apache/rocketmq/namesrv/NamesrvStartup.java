@@ -54,7 +54,7 @@ public class NamesrvStartup {
     public static NamesrvController main0(String[] args) {
 
         try {
-            // 初始化Namesrv，包括初始化配置文件
+            // 实例化Namesrv，包括初始化配置文件、netty服务配置文件
             NamesrvController controller = createNamesrvController(args);
             // 启动
             start(controller);
@@ -83,7 +83,9 @@ public class NamesrvStartup {
 
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
+        // namesrv 默认端口号
         nettyServerConfig.setListenPort(9876);
+        // 拦截 -c 配置文件
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
@@ -118,6 +120,7 @@ public class NamesrvStartup {
         JoranConfigurator configurator = new JoranConfigurator();
         configurator.setContext(lc);
         lc.reset();
+        // 加载日志配置文件
         configurator.doConfigure(namesrvConfig.getRocketmqHome() + "/conf/logback_namesrv.xml");
 
         log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
@@ -139,6 +142,7 @@ public class NamesrvStartup {
             throw new IllegalArgumentException("NamesrvController is null");
         }
 
+        // 初始化操作
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();
