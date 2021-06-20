@@ -122,6 +122,7 @@ public class DefaultMessageStore implements MessageStore {
         this.brokerStatsManager = brokerStatsManager;
         this.allocateMappedFileService = new AllocateMappedFileService(this);
         if (messageStoreConfig.isEnableDLegerCommitLog()) {
+            // commitLog交给DLedger管理(基于raft选举模式)
             this.commitLog = new DLedgerCommitLog(this);
         } else {
             this.commitLog = new CommitLog(this);
@@ -129,7 +130,9 @@ public class DefaultMessageStore implements MessageStore {
         this.consumeQueueTable = new ConcurrentHashMap<>(32);
 
         this.flushConsumeQueueService = new FlushConsumeQueueService();
+        // 实例化清除（过期）CommitLog服务
         this.cleanCommitLogService = new CleanCommitLogService();
+        // 实例化清除（过期）CommitQueue服务
         this.cleanConsumeQueueService = new CleanConsumeQueueService();
         this.storeStatsService = new StoreStatsService();
         this.indexService = new IndexService(this);
