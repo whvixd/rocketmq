@@ -79,7 +79,7 @@ public class NamesrvController {
         // 加载kv配置
         this.kvConfigManager.load();
 
-        // 实例化netty
+        // 实例化netty服务端
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
         // 实例化线程池
@@ -161,8 +161,10 @@ public class NamesrvController {
     }
 
     public void start() throws Exception {
+        // 启动netty服务器
         this.remotingServer.start();
 
+        // 启动文件监听服务
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }

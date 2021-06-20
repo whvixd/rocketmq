@@ -142,13 +142,14 @@ public class NamesrvStartup {
             throw new IllegalArgumentException("NamesrvController is null");
         }
 
-        // 初始化操作
+        // 初始化操作：netty、线程池、建立心跳、注册文件监听器
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();
             System.exit(-3);
         }
 
+        // 注册关闭服务的钩子方法
         Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(log, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -157,6 +158,7 @@ public class NamesrvStartup {
             }
         }));
 
+        // 启动namesrv服务
         controller.start();
 
         return controller;
