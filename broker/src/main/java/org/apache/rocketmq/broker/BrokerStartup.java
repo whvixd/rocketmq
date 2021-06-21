@@ -118,6 +118,7 @@ public class BrokerStartup {
             nettyClientConfig.setUseTLS(Boolean.parseBoolean(System.getProperty(TLS_ENABLE,
                 String.valueOf(TlsSystemConfig.tlsMode == TlsMode.ENFORCING))));
             nettyServerConfig.setListenPort(10911);
+            // 消息存储配置
             final MessageStoreConfig messageStoreConfig = new MessageStoreConfig();
 
             if (BrokerRole.SLAVE == messageStoreConfig.getBrokerRole()) {
@@ -225,8 +226,10 @@ public class BrokerStartup {
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
 
-            // 初始化
+            // **************************************************
+            // broker初始化操作：各种配置文件、线程池等、调度器等初始化
             boolean initResult = controller.initialize();
+            // **************************************************
             if (!initResult) {
                 controller.shutdown();
                 System.exit(-3);

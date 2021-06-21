@@ -264,7 +264,7 @@ public class BrokerController {
                 log.error("Failed to initialize", e);
             }
         }
-
+        // 消息存储加载，commit log、commit queue、index等加载
         result = result && this.messageStore.load();
 
         if (result) {
@@ -272,6 +272,8 @@ public class BrokerController {
             NettyServerConfig fastConfig = (NettyServerConfig) this.nettyServerConfig.clone();
             fastConfig.setListenPort(nettyServerConfig.getListenPort() - 2);
             this.fastRemotingServer = new NettyRemotingServer(fastConfig, this.clientHousekeepingService);
+
+// #########线程池实例化#########
             // 实例化发送消息线程池
             this.sendMessageExecutor = new BrokerFixedThreadPoolExecutor(
                 this.brokerConfig.getSendMessageThreadPoolNums(),
@@ -338,14 +340,19 @@ public class BrokerController {
                 Executors.newFixedThreadPool(this.brokerConfig.getConsumerManageThreadPoolNums(), new ThreadFactoryImpl(
                     "ConsumerManageThread_"));
 
+// #############################
+
+            // 各种线程池和处理器的注册
             this.registerProcessor();
 
+// #########调度器注册任务#########
             final long initialDelay = UtilAll.computeNextMorningTimeMillis() - System.currentTimeMillis();
             final long period = 1000 * 60 * 60 * 24;
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        // 每天记录broker信息
                         BrokerController.this.getBrokerStats().record();
                     } catch (Throwable e) {
                         log.error("schedule record error.", e);
@@ -357,6 +364,7 @@ public class BrokerController {
                 @Override
                 public void run() {
                     try {
+                        // 暂存consumerOffset信息（文件），默认每5秒
                         BrokerController.this.consumerOffsetManager.persist();
                     } catch (Throwable e) {
                         log.error("schedule persist consumerOffset error.", e);
@@ -379,6 +387,7 @@ public class BrokerController {
                 @Override
                 public void run() {
                     try {
+                        // （若开启时）broker保护机制：当消息组消费过慢，导致文件过大，会丢弃该消费组；每三分钟
                         BrokerController.this.protectBroker();
                     } catch (Throwable e) {
                         log.error("protectBroker error.", e);
@@ -390,6 +399,7 @@ public class BrokerController {
                 @Override
                 public void run() {
                     try {
+                        // 每秒打印broker相关参数信息
                         BrokerController.this.printWaterMark();
                     } catch (Throwable e) {
                         log.error("printWaterMark error.", e);
@@ -398,10 +408,10 @@ public class BrokerController {
             }, 10, 1, TimeUnit.SECONDS);
 
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
                 @Override
                 public void run() {
                     try {
+                        // 每分钟打印已存储在提交日志中但尚未分派给消费队列的字节数。
                         log.info("dispatch behind commit log {} bytes", BrokerController.this.getMessageStore().dispatchBehindBytes());
                     } catch (Throwable e) {
                         log.error("schedule dispatchBehindBytes error.", e);
@@ -418,6 +428,7 @@ public class BrokerController {
                     @Override
                     public void run() {
                         try {
+                            // 每两分钟动态获取namesrv地址
                             BrokerController.this.brokerOuterAPI.fetchNameServerAddr();
                         } catch (Throwable e) {
                             log.error("ScheduledTask fetchNameServerAddr exception", e);
@@ -427,18 +438,22 @@ public class BrokerController {
             }
 
             if (!messageStoreConfig.isEnableDLegerCommitLog()) {
+                // 从broker
                 if (BrokerRole.SLAVE == this.messageStoreConfig.getBrokerRole()) {
+                    // 配置了主broker
                     if (this.messageStoreConfig.getHaMasterAddress() != null && this.messageStoreConfig.getHaMasterAddress().length() >= 6) {
                         this.messageStore.updateHaMasterAddress(this.messageStoreConfig.getHaMasterAddress());
                         this.updateMasterHAServerAddrPeriodically = false;
                     } else {
                         this.updateMasterHAServerAddrPeriodically = true;
                     }
+                    // 非从broker，即主broker
                 } else {
                     this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                         @Override
                         public void run() {
                             try {
+                                // 每分钟打印返回从broker落后多少
                                 BrokerController.this.printMasterAndSlaveDiff();
                             } catch (Throwable e) {
                                 log.error("schedule printMasterAndSlaveDiff error.", e);
@@ -448,6 +463,7 @@ public class BrokerController {
                 }
             }
 
+            // 开启tls了，添加文件更新监听器
             if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
                 // Register a listener to reload SslContext
                 try {
@@ -488,8 +504,13 @@ public class BrokerController {
                     log.warn("FileWatchService created error, can't load the certificate dynamically");
                 }
             }
+// #############################
+
+            // 初始化事务
             initialTransaction();
+            // 初始化ACL（access control list的简称，俗称访问控制列表。访问控制，基本上会涉及到用户、资源、权限、角色等概念）
             initialAcl();
+            // 初始化RPC钩子方法
             initialRpcHooks();
         }
         return result;
