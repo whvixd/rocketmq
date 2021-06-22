@@ -341,6 +341,7 @@ public class MappedFile extends ReferenceResource {
         int flush = this.flushedPosition.get();
         int write = getReadPosition();
 
+        // 文件满了
         if (this.isFull()) {
             return true;
         }
