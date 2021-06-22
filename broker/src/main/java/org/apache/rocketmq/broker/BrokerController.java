@@ -879,14 +879,17 @@ public class BrokerController {
     }
 
     public void start() throws Exception {
+        // 启动消息存储服务（各种线程启动）
         if (this.messageStore != null) {
             this.messageStore.start();
         }
 
+        // 启动netty服务端
         if (this.remotingServer != null) {
             this.remotingServer.start();
         }
 
+        // netty服务端，处理器不一样，todo ???
         if (this.fastRemotingServer != null) {
             this.fastRemotingServer.start();
         }

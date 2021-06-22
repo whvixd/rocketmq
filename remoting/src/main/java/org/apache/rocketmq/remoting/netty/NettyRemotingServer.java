@@ -184,6 +184,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     @Override
     public void start() {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
+            // 默认8个线程
             nettyServerConfig.getServerWorkerThreads(),
             new ThreadFactory() {
 
@@ -195,6 +196,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 }
             });
 
+        // 实例化各种处理器
         prepareSharableHandlers();
 
         ServerBootstrap childHandler =
@@ -243,6 +245,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             @Override
             public void run() {
                 try {
+                    // 定期调用此方法来扫描已弃用的请求并使其过期。
                     NettyRemotingServer.this.scanResponseTable();
                 } catch (Throwable e) {
                     log.error("scanResponseTable exception", e);
@@ -345,9 +348,13 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     }
 
     private void prepareSharableHandlers() {
+        // tls处理器
         handshakeHandler = new HandshakeHandler(TlsSystemConfig.tlsMode);
+        // 编码处理器
         encoder = new NettyEncoder();
+        // 连接管理处理器
         connectionManageHandler = new NettyConnectManageHandler();
+        // 服务段处理器（注册请求处理器）
         serverHandler = new NettyServerHandler();
     }
 
