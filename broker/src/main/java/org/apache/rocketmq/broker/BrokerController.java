@@ -889,19 +889,22 @@ public class BrokerController {
             this.remotingServer.start();
         }
 
-        // netty服务端，处理器不一样，todo ???
+        // netty服务端，处理器不一样，whvixd todo ???
         if (this.fastRemotingServer != null) {
             this.fastRemotingServer.start();
         }
 
+        // 启动文件监听服务
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }
 
+        // 外部api服务，whvixd todo ？？？
         if (this.brokerOuterAPI != null) {
             this.brokerOuterAPI.start();
         }
 
+        // 启动处理请求服务
         if (this.pullRequestHoldService != null) {
             this.pullRequestHoldService.start();
         }

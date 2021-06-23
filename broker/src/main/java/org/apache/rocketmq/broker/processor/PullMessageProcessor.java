@@ -553,10 +553,12 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
             @Override
             public void run() {
                 try {
+                    // 处理请求
                     final RemotingCommand response = PullMessageProcessor.this.processRequest(channel, request, false);
 
                     if (response != null) {
                         response.setOpaque(request.getOpaque());
+                        // 标识为响应
                         response.markResponseType();
                         try {
                             channel.writeAndFlush(response).addListener(new ChannelFutureListener() {
