@@ -909,20 +909,25 @@ public class BrokerController {
             this.pullRequestHoldService.start();
         }
 
+        // 定时扫描异常（过期）的channel
         if (this.clientHousekeepingService != null) {
             this.clientHousekeepingService.start();
         }
 
+        // 启动过滤服务，shell 执行 FiltersrvStartup
         if (this.filterServerManager != null) {
             this.filterServerManager.start();
         }
 
+        // 是否启用DLeger Commit Log
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
             startProcessorByHa(messageStoreConfig.getBrokerRole());
             handleSlaveSynchronize(messageStoreConfig.getBrokerRole());
+            // 注册所有的broker
             this.registerBrokerAll(true, false, true);
         }
 
+        // 定时注册所有的broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -935,10 +940,12 @@ public class BrokerController {
             }
         }, 1000 * 10, Math.max(10000, Math.min(brokerConfig.getRegisterNameServerPeriod(), 60000)), TimeUnit.MILLISECONDS);
 
+        // 未实现，忽略
         if (this.brokerStatsManager != null) {
             this.brokerStatsManager.start();
         }
 
+        // 快速失败过期的请求（操作系统的页缓存过忙）
         if (this.brokerFastFailure != null) {
             this.brokerFastFailure.start();
         }
@@ -1173,10 +1180,12 @@ public class BrokerController {
                 slaveSyncFuture.cancel(false);
             }
             this.slaveSynchronize.setMasterAddr(null);
+            // 每10秒
             slaveSyncFuture = this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        // 同步主broker相关信息
                         BrokerController.this.slaveSynchronize.syncAll();
                     }
                     catch (Throwable e) {
@@ -1264,6 +1273,7 @@ public class BrokerController {
 
     private void startProcessorByHa(BrokerRole role) {
         if (BrokerRole.SLAVE != role) {
+            // 主broker启动事务消息检测服务
             if (this.transactionalMessageCheckService != null) {
                 this.transactionalMessageCheckService.start();
             }
