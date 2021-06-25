@@ -922,6 +922,7 @@ public class BrokerController {
         // 是否启用DLeger Commit Log
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
             startProcessorByHa(messageStoreConfig.getBrokerRole());
+            // 同步主broker相关信息
             handleSlaveSynchronize(messageStoreConfig.getBrokerRole());
             // 注册所有的broker
             this.registerBrokerAll(true, false, true);
