@@ -171,6 +171,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         }
     }
 
+    // 每隔5s保存到本地文件中，为啥这序列化offsetTable：getter方法
     public String encode(final boolean prettyFormat) {
         return RemotingSerializable.toJson(this, prettyFormat);
     }
