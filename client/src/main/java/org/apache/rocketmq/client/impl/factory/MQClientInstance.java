@@ -239,7 +239,7 @@ public class MQClientInstance {
                     this.startScheduledTask();
                     // Start pull service，启动拉取服务
                     this.pullMessageService.start();
-                    // Start rebalance service
+                    // Start rebalance service，负载均衡
                     this.rebalanceService.start();
                     // Start push service
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);

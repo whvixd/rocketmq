@@ -83,7 +83,7 @@ public class Validators {
         if (null == msg) {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL, "the message is null");
         }
-        // topic
+        // topic，校验topic合法性：长度，规范
         Validators.checkTopic(msg.getTopic());
 
         // body

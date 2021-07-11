@@ -451,9 +451,11 @@ public class MQClientAPIImpl {
         boolean isReply = msgType != null && msgType.equals(MixAll.REPLY_MESSAGE_FLAG);
         if (isReply) {
             if (sendSmartMsg) {
+                // 缩短字段
                 SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
                 request = RemotingCommand.createRequestCommand(RequestCode.SEND_REPLY_MESSAGE_V2, requestHeaderV2);
             } else {
+                // todo 应答消息？
                 request = RemotingCommand.createRequestCommand(RequestCode.SEND_REPLY_MESSAGE, requestHeader);
             }
         } else {
@@ -467,18 +469,22 @@ public class MQClientAPIImpl {
         request.setBody(msg.getBody());
 
         switch (communicationMode) {
+            // 单向
             case ONEWAY:
                 this.remotingClient.invokeOneway(addr, request, timeoutMillis);
                 return null;
+            // 异步
             case ASYNC:
                 final AtomicInteger times = new AtomicInteger();
                 long costTimeAsync = System.currentTimeMillis() - beginStartTime;
                 if (timeoutMillis < costTimeAsync) {
                     throw new RemotingTooMuchRequestException("sendMessage call timeout");
                 }
+                // 发送异步消息
                 this.sendMessageAsync(addr, brokerName, msg, timeoutMillis - costTimeAsync, request, sendCallback, topicPublishInfo, instance,
                     retryTimesWhenSendFailed, times, context, producer);
                 return null;
+            // 同步
             case SYNC:
                 long costTimeSync = System.currentTimeMillis() - beginStartTime;
                 if (timeoutMillis < costTimeSync) {
@@ -531,6 +537,7 @@ public class MQClientAPIImpl {
                         SendResult sendResult = MQClientAPIImpl.this.processSendResponse(brokerName, msg, response);
                         if (context != null && sendResult != null) {
                             context.setSendResult(sendResult);
+                            // 执行后置操作
                             context.getProducer().executeSendMessageHookAfter(context);
                         }
                     } catch (Throwable e) {
