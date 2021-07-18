@@ -186,6 +186,7 @@ public class MixAll {
         }
     }
 
+    // 将fileName内容读出，byte[] 转为字符串
     public static String file2String(final String fileName) throws IOException {
         File file = new File(fileName);
         return file2String(file);

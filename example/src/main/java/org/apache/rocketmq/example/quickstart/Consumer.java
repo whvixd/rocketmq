@@ -25,17 +25,20 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 
+import static org.apache.rocketmq.common.protocol.heartbeat.MessageModel.BROADCASTING;
+import static org.apache.rocketmq.common.protocol.heartbeat.MessageModel.CLUSTERING;
+
 /**
  * This example shows how to subscribe and consume messages using providing {@link DefaultMQPushConsumer}.
  */
 public class Consumer {
 
     public static void main(String[] args) throws InterruptedException, MQClientException {
-
+        initConfig();
         /*
          * Instantiate with specified consumer group name.
          */
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("please_rename_unique_group_name_4");
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("whvixd_local_debug_consumer");
 
         consumer.setNamesrvAddr("127.0.0.1:9876");
         /*
@@ -54,6 +57,7 @@ public class Consumer {
          * Specify where to start in case the specified consumer group is a brand new one.
          */
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+//        consumer.setMessageModel(BROADCASTING);
 
         /*
          * Subscribe one more more topics to consume.
@@ -68,12 +72,15 @@ public class Consumer {
             @Override
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                 ConsumeConcurrentlyContext context) {
-                System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
+//                System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
+                System.out.printf("commitLogOffset: %d, Body: %s %n", msgs.get(0).getCommitLogOffset(), new String(msgs.get(0).getBody()));
+
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }
         });
 
         /*
+         * org.apache.rocketmq.client.impl.consumer.RebalanceService.run 入口
          * 1. this.pullMessageService.start();
          * 2. PullMessageService -> run() 轮询拉取堵塞队列
          * 3. PullCallback -> onSuccess()
@@ -84,7 +91,49 @@ public class Consumer {
          *  Launch the consumer instance.
          */
         consumer.start();
+        /**
+         * todo：offset如何算出的
+         */
 
         System.out.printf("Consumer Started.%n");
     }
+
+    private static void initConfig(){
+        // 广播模式offset本地存储目录
+        System.setProperty("rocketmq.client.localOffsetStoreDir","/Users/didi/Documents/workspace/idea/rocketmq/localdebug/store/offsets");
+    }
 }
+
+
+
+/*
+/Users/didi/.rocketmq_offsets/192.168.1.14@DEFAULT/whvixd_local_debug_consumer/offsets.json
+广播模式，默认存储到本地的目录
+
+brokerName+queueId+topic:offset
+{
+	"offsetTable":{
+		{
+			"brokerName":"broker-a",
+			"queueId":3,
+			"topic":"TopicTest"
+		}:1250,
+		{
+			"brokerName":"broker-a",
+			"queueId":2,
+			"topic":"TopicTest"
+		}:1249,
+		{
+			"brokerName":"broker-a",
+			"queueId":1,
+			"topic":"TopicTest"
+		}:1247,
+		{
+			"brokerName":"broker-a",
+			"queueId":0,
+			"topic":"TopicTest"
+		}:1250
+	}
+}
+
+ */
